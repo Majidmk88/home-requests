@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="homely">
+<meta name="theme-color" content="#ffffff">
+<title>homely</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23ffffff' stroke='%23E0E0F0' stroke-width='3'/%3E%3Crect x='22' y='28' width='14' height='44' rx='4' fill='%233B47F0'/%3E%3Crect x='64' y='28' width='14' height='44' rx='4' fill='%233B47F0'/%3E%3Crect x='22' y='46' width='56' height='12' rx='4' fill='%233B47F0'/%3E%3Ccircle cx='72' cy='30' r='9' fill='%239B5CF6'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='0' fill='%23ffffff'/%3E%3Crect x='22' y='28' width='14' height='44' rx='4' fill='%233B47F0'/%3E%3Crect x='64' y='28' width='14' height='44' rx='4' fill='%233B47F0'/%3E%3Crect x='22' y='46' width='56' height='12' rx='4' fill='%233B47F0'/%3E%3Ccircle cx='72' cy='30' r='9' fill='%239B5CF6'/%3E%3C/svg%3E">
+
+<!-- ══ FIREBASE SDK ══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+  :root{
+    --blue:#3B47F0;--purple:#9B5CF6;--green:#10B981;
+    --blue-light:#EEF0FE;--purple-light:#F3EEFF;--green-light:#ECFDF5;
+    --bg:#ffffff;--bg-secondary:#F7F7FB;
+    --text:#1A1A2E;--text-secondary:#6B6B88;--text-tertiary:#ABABC4;
+    --border:rgba(59,71,240,0.10);--border-md:rgba(59,71,240,0.18);
+    --r-md:12px;--r-lg:16px;
+    --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media(prefers-color-scheme:dark){:root{
+    --bg:#0F0F1A;--bg-secondary:#1A1A2E;--text:#F0F0FF;
+    --text-secondary:#9999BB;--text-tertiary:#55556A;
+    --border:rgba(155,92,246,0.15);--border-md:rgba(155,92,246,0.28);
+    --blue-light:#1A1E4A;--purple-light:#1E1530;--green-light:#022C22;
+  }}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none;}
+  .page{display:none;flex-direction:column;height:100%;overflow:hidden;}
+  .page.active{display:flex;}
+  .scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(1rem + var(--safe-bottom));}
+
+  /* ══ SETUP SCREEN ══ */
+  #page-setup{background:#ffffff;justify-content:center;align-items:center;padding:32px 28px;gap:16px;text-align:center;}
+  .setup-logo{font-size:36px;font-weight:800;color:#1A1A2E;letter-spacing:-1px;}
+  .setup-logo span{color:#3B47F0;}
+  .setup-box{width:100%;max-width:340px;background:#F7F7FB;border-radius:16px;padding:24px;border:1px solid #EBEBF5;}
+  .setup-box h2{font-size:17px;font-weight:800;color:#1A1A2E;margin-bottom:8px;}
+  .setup-box p{font-size:13px;color:#6B6B88;line-height:1.6;margin-bottom:16px;}
+  .setup-input{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid #DDDDF0;font-size:14px;font-family:inherit;background:#ffffff;color:#1A1A2E;outline:none;margin-bottom:10px;}
+  .setup-input:focus{border-color:#3B47F0;}
+  .setup-btn{width:100%;padding:13px;border-radius:12px;background:#3B47F0;color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .setup-btn:active{opacity:.85;}
+  .setup-link{font-size:12px;color:#9B5CF6;margin-top:8px;text-decoration:underline;cursor:pointer;}
+
+  /* ══ ROLE SCREEN ══ */
+  #page-role{background:#ffffff;justify-content:center;align-items:center;padding:40px 28px calc(40px + var(--safe-bottom));}
+  .r-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:40px;}
+  .r-logo-name{font-size:36px;font-weight:800;color:#1A1A2E;letter-spacing:-1.2px;}
+  .r-logo-name span{color:#3B47F0;}
+  .r-logo-sub{font-size:14px;color:#ABABC4;font-weight:500;}
+  .r-heading{font-size:21px;font-weight:800;color:#1A1A2E;margin-bottom:6px;text-align:center;}
+  .r-sub{font-size:14px;color:#ABABC4;margin-bottom:28px;text-align:center;}
+  .r-cards{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px;}
+  .r-card{display:flex;align-items:center;gap:16px;background:#ffffff;border:1.5px solid #EBEBF5;border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;transition:all .15s;user-select:none;}
+  .r-card:active{transform:scale(0.97);}
+  .r-card.c-majed:hover,.r-card.c-majed:active{border-color:var(--blue);background:var(--blue-light);}
+  .r-card.c-noura:hover,.r-card.c-noura:active{border-color:var(--purple);background:var(--purple-light);}
+  .r-card.c-maid:hover,.r-card.c-maid:active{border-color:var(--green);background:var(--green-light);}
+  .r-info{flex:1;}
+  .r-name{font-size:17px;font-weight:700;color:#1A1A2E;}
+  .r-desc{font-size:12px;color:#ABABC4;margin-top:2px;}
+  .r-arrow{font-size:22px;color:#CCCCDD;}
+
+  /* ══ TOP BAR ══ */
+  .top-bar{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top) + 14px) 16px 14px;border-bottom:0.5px solid var(--border);background:var(--bg);flex-shrink:0;}
+  .logo-mark{display:flex;align-items:center;gap:9px;}
+  .logo-icon{width:32px;height:32px;flex-shrink:0;}
+  .logo-wm{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-0.5px;}
+  .logo-wm span{color:var(--blue);}
+  .top-sub{font-size:12px;color:var(--text-secondary);margin-top:1px;}
+  .switch-btn{font-size:12px;padding:6px 13px;border-radius:20px;border:0.5px solid var(--border-md);background:transparent;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-weight:600;}
+
+  /* ══ NOTIFY BANNER (family) ══ */
+  .notify-banner{display:none;align-items:center;gap:10px;border-radius:var(--r-md);margin:10px 16px 0;padding:11px 14px;flex-shrink:0;}
+  .notify-banner.accepted{background:var(--blue-light);border:0.5px solid var(--blue);}
+  .notify-banner.done{background:var(--green-light);border:0.5px solid var(--green);}
+  .notify-banner.show{display:flex;animation:nbslide .3s ease-out;}
+  @keyframes nbslide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .nb-txt{font-size:13px;font-weight:700;}
+  .nb-txt.accepted{color:var(--blue);}
+  .nb-txt.done{color:var(--green);}
+
+  /* ══ MAID ALARM BANNER ══ */
+  .alarm-banner{display:none;align-items:center;gap:10px;background:var(--purple-light);border:0.5px solid var(--purple);border-radius:var(--r-md);margin:10px 16px 0;padding:11px 14px;flex-shrink:0;}
+  .alarm-banner.active{display:flex;animation:bigshake .45s ease-in-out infinite;}
+  @keyframes bigshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .alarm-bell{font-size:22px;animation:ring .4s ease-in-out infinite;}
+  @keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-22deg)}75%{transform:rotate(22deg)}}
+  .alarm-txt{font-size:13px;font-weight:700;color:var(--purple);}
+  .alarm-sub{font-size:11px;color:var(--purple);opacity:.7;margin-top:1px;}
+
+  /* ══ SYNC STATUS ══ */
+  .sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+  .sync-dot.live{background:#10B981;}
+  .sync-dot.offline{background:#EF4444;}
+
+  /* ══ SERVICE GRID ══ */
+  .sec-label{font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--text-tertiary);text-transform:uppercase;padding:18px 16px 8px;}
+  .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px;}
+  @media(min-width:600px){.svc-grid{grid-template-columns:repeat(4,1fr);}}
+  .svc-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:14px 12px;cursor:pointer;transition:transform .1s,background .15s,border-color .15s;display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-height:90px;user-select:none;}
+  .svc-card:active{transform:scale(0.95);background:var(--blue-light);border-color:var(--blue);}
+  .svc-icon{font-size:24px;line-height:1;}
+  .svc-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3;}
+  .svc-tag{font-size:10px;color:var(--text-tertiary);font-weight:500;}
+
+  /* ══ PENDING LIST ══ */
+  .pend-list{padding:0 16px;display:flex;flex-direction:column;gap:8px;}
+  .pend-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r-md);padding:11px 13px;display:flex;align-items:center;gap:11px;}
+  .pend-icon{width:38px;height:38px;border-radius:10px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .pend-body{flex:1;min-width:0;}
+  .pend-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pend-meta{font-size:11px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;}
+  .b-pending{background:var(--purple-light);color:var(--purple);}
+  .b-accepted{background:var(--blue-light);color:var(--blue);}
+  .b-done{background:#D1FAE5;color:#065F46;}
+  .b-declined{background:var(--bg-secondary);color:var(--text-tertiary);}
+
+  /* ══ TAB BAR ══ */
+  .tab-bar{display:flex;border-top:0.5px solid var(--border);background:var(--bg);padding-bottom:var(--safe-bottom);flex-shrink:0;}
+  .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border:none;background:transparent;cursor:pointer;color:var(--text-tertiary);font-family:inherit;transition:color .15s;}
+  .tab-btn.active{color:var(--blue);}
+  .tab-icon{font-size:22px;line-height:1;}
+  .tab-lbl{font-size:10px;font-weight:700;letter-spacing:.03em;}
+
+  /* ══ MAID HEADER ══ */
+  .maid-hdr{padding:calc(var(--safe-top)+20px) 20px 20px;background:var(--blue);flex-shrink:0;}
+  .maid-hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .maid-hdr h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px;}
+  .maid-hdr-sub{font-size:13px;color:rgba(255,255,255,0.7);margin-top:2px;}
+  .maid-stats{display:flex;gap:10px;}
+  .maid-stat{flex:1;background:rgba(255,255,255,0.15);border-radius:var(--r-md);padding:10px 12px;}
+  .maid-stat-n{font-size:22px;font-weight:800;color:#fff;}
+  .maid-stat-l{font-size:10px;color:rgba(255,255,255,0.7);font-weight:600;letter-spacing:.04em;margin-top:2px;}
+
+  /* ══ MAID LIST ══ */
+  .maid-list{padding:16px;display:flex;flex-direction:column;gap:12px;}
+  .maid-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;transition:border-color .3s;}
+  .maid-item.ringing{border-color:var(--purple);animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{border-color:var(--purple)}50%{border-color:#C9A8F8}}
+  .maid-item-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .maid-ico{font-size:20px;width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .maid-title{font-size:15px;font-weight:700;}
+  .maid-meta{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+  .maid-urg{margin-left:auto;font-size:11px;font-weight:700;color:var(--purple);background:var(--purple-light);padding:3px 10px;border-radius:20px;flex-shrink:0;}
+  .maid-note{font-size:13px;color:var(--text-secondary);background:var(--bg-secondary);border-radius:8px;padding:8px 11px;margin-bottom:10px;line-height:1.5;}
+  .maid-btns{display:flex;gap:8px;}
+  .btn-accept{flex:1;padding:11px;border-radius:var(--r-md);background:var(--blue-light);color:var(--blue);border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .btn-done{flex:1;padding:11px;border-radius:var(--r-md);background:#D1FAE5;color:#065F46;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .btn-cant{padding:11px 16px;border-radius:var(--r-md);background:var(--bg-secondary);border:none;font-size:14px;color:var(--text-secondary);cursor:pointer;font-family:inherit;}
+
+  /* ══ MODAL ══ */
+  .modal-back{position:fixed;inset:0;z-index:200;background:rgba(10,10,30,.5);display:flex;align-items:flex-end;justify-content:center;}
+  .modal{background:var(--bg);border-radius:24px 24px 0 0;width:100%;max-width:540px;padding:16px 20px calc(20px + var(--safe-bottom));animation:slideUp .22s cubic-bezier(.25,.8,.25,1);max-height:85vh;overflow-y:auto;}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .modal-handle{width:38px;height:4px;border-radius:2px;background:var(--border-md);margin:0 auto 18px;}
+  .m-icon{font-size:32px;margin-bottom:8px;}
+  .modal h2{font-size:20px;font-weight:800;margin-bottom:4px;}
+  .m-sub{font-size:14px;color:var(--text-secondary);margin-bottom:18px;}
+  .modal label{font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;}
+  .modal select,.modal textarea{width:100%;border-radius:var(--r-md);border:0.5px solid var(--border-md);padding:11px 13px;font-size:15px;font-family:inherit;background:var(--bg-secondary);color:var(--text);margin-bottom:14px;appearance:none;-webkit-appearance:none;outline:none;resize:none;}
+  .modal select:focus,.modal textarea:focus{border-color:var(--blue);}
+  .m-btns{display:flex;gap:10px;margin-top:4px;}
+  .btn-send{flex:1;padding:14px;border-radius:var(--r-lg);background:var(--blue);color:#fff;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .btn-send:active{opacity:.8;}
+  .btn-cancel{padding:14px 20px;border-radius:var(--r-lg);background:var(--bg-secondary);border:none;font-size:16px;color:var(--text-secondary);cursor:pointer;font-family:inherit;}
+
+  /* ══ EMPTY ══ */
+  .empty{text-align:center;padding:48px 16px;color:var(--text-tertiary);font-size:14px;}
+  .empty .ei{font-size:40px;margin-bottom:10px;}
+  .empty .et{font-size:16px;font-weight:700;color:var(--text-secondary);margin-bottom:4px;}
+
+  /* ══ TOAST ══ */
+  .toast{position:fixed;bottom:calc(90px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:13px;font-weight:700;padding:10px 20px;border-radius:22px;z-index:999;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ══ FIREBASE SETUP SCREEN ══ -->
+<div id="page-setup" class="page active">
+  <svg width="72" height="72" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="24" fill="#ffffff" stroke="#E0E0F0" stroke-width="3"/>
+    <rect x="22" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+    <rect x="64" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+    <rect x="22" y="46" width="56" height="12" rx="4" fill="#3B47F0"/>
+    <circle cx="72" cy="30" r="9" fill="#9B5CF6"/>
+  </svg>
+  <div class="setup-logo">home<span>ly</span></div>
+  <div class="setup-box">
+    <h2>🔗 Connect to Firebase</h2>
+    <p>To sync requests across all phones in real time, paste your Firebase Database URL below. This takes 2 minutes to set up — see the guide below.</p>
+    <input class="setup-input" id="fb-url" placeholder="https://your-project-default-rtdb.firebaseio.com" type="url" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button class="setup-btn" onclick="connectFirebase()">Connect & Start</button>
+    <div class="setup-link" onclick="showGuide()">How to get my Firebase URL? ›</div>
+  </div>
+  <div id="setup-guide" style="display:none;width:100%;max-width:340px;background:#F7F7FB;border-radius:16px;padding:20px;border:1px solid #EBEBF5;font-size:13px;color:#1A1A2E;line-height:1.8;margin-top:12px;">
+    <strong>Quick Firebase Setup (free, 2 min):</strong><br><br>
+    1. Go to <strong>console.firebase.google.com</strong><br>
+    2. Click <strong>"Add project"</strong> → name it "homely" → Continue<br>
+    3. Click <strong>"Realtime Database"</strong> → Create database<br>
+    4. Choose <strong>"Start in test mode"</strong> → Enable<br>
+    5. Copy the URL shown (looks like <em>https://homely-xxxxx-default-rtdb.firebaseio.com</em>)<br>
+    6. Paste it above and tap Connect<br><br>
+    <strong>Do this once</strong> — then share the same app URL with Noura and the maid. All three phones will sync instantly.
+  </div>
+</div>
+
+<!-- ══ ROLE SELECTION ══ -->
+<div id="page-role" class="page">
+  <div class="r-logo">
+    <svg width="76" height="76" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="24" fill="#ffffff" stroke="#E0E0F0" stroke-width="3"/>
+      <rect x="22" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+      <rect x="64" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+      <rect x="22" y="46" width="56" height="12" rx="4" fill="#3B47F0"/>
+      <circle cx="72" cy="30" r="9" fill="#9B5CF6"/>
+    </svg>
+    <div class="r-logo-name">home<span>ly</span></div>
+    <div style="font-size:14px;color:#ABABC4;font-weight:500;"><span class="sync-dot live" id="sync-dot"></span>Live sync active</div>
+  </div>
+  <div class="r-heading">Who are you?</div>
+  <div class="r-sub">Choose your profile to continue</div>
+  <div class="r-cards">
+    <div class="r-card c-majed" onclick="selectRole('Majed')">
+      <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="26" r="26" fill="#EEF0FE"/>
+        <circle cx="26" cy="20" r="8" fill="#3B47F0"/>
+        <path d="M10 44c0-8.837 7.163-16 16-16s16 7.163 16 16" fill="#3B47F0"/>
+      </svg>
+      <div class="r-info"><div class="r-name">Majed</div><div class="r-desc">Place &amp; track home requests</div></div>
+      <div class="r-arrow">›</div>
+    </div>
+    <div class="r-card c-noura" onclick="selectRole('Noura')">
+      <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="26" r="26" fill="#F3EEFF"/>
+        <path d="M18 19 C14 22 13 30 15 38" stroke="#9B5CF6" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.35"/>
+        <path d="M34 19 C38 22 39 30 37 38" stroke="#9B5CF6" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.35"/>
+        <circle cx="26" cy="20" r="8" fill="#9B5CF6"/>
+        <path d="M10 44c0-8.837 7.163-16 16-16s16 7.163 16 16" fill="#9B5CF6"/>
+      </svg>
+      <div class="r-info"><div class="r-name">Noura</div><div class="r-desc">Place &amp; track home requests</div></div>
+      <div class="r-arrow">›</div>
+    </div>
+    <div class="r-card c-maid" onclick="selectRole('Maid')">
+      <svg width="52" height="52" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="26" cy="26" r="26" fill="#ECFDF5"/>
+        <circle cx="22" cy="19" r="7" fill="#10B981"/>
+        <path d="M6 44c0-8.284 6.716-15 15-15s15 6.716 15 15" fill="#10B981"/>
+        <path d="M34 29 C37 33 40 37 43 42" stroke="#10B981" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M40 40 C41 37 46 38 47 41 C46 44 41 45 40 42 Z" fill="#10B981"/>
+      </svg>
+      <div class="r-info"><div class="r-name">Maid</div><div class="r-desc">View &amp; manage incoming tasks</div></div>
+      <div class="r-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FAMILY SCREEN ══ -->
+<div id="page-family" class="page">
+  <div class="top-bar">
+    <div class="logo-mark">
+      <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="22" fill="#ffffff" stroke="#E8E8F5" stroke-width="2"/>
+        <rect x="22" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+        <rect x="64" y="28" width="14" height="44" rx="4" fill="#3B47F0"/>
+        <rect x="22" y="46" width="56" height="12" rx="4" fill="#3B47F0"/>
+        <circle cx="72" cy="30" r="9" fill="#9B5CF6"/>
+      </svg>
+      <div>
+        <div class="logo-wm">home<span>ly</span></div>
+        <div class="top-sub" id="fam-greet"></div>
+      </div>
+    </div>
+    <button class="switch-btn" onclick="goRole()">↩ Switch</button>
+  </div>
+
+  <div id="notify-banner" class="notify-banner">
+    <div style="font-size:20px;" id="nb-icon"></div>
+    <div class="nb-txt" id="nb-txt"></div>
+  </div>
+
+  <div id="ftab-home" class="scroll-body">
+    <div class="sec-label">Quick request</div>
+    <div class="svc-grid" id="svc-grid"></div>
+    <div class="sec-label">All requests</div>
+    <div class="pend-list" id="pend-list"></div>
+  </div>
+  <div id="ftab-history" class="scroll-body" style="display:none;">
+    <div class="sec-label">History</div>
+    <div class="pend-list" id="hist-list"></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tb-home" onclick="famTab('home')">
+      <div class="tab-icon">🏠</div><div class="tab-lbl">Home</div>
+    </button>
+    <button class="tab-btn" id="tb-hist" onclick="famTab('history')">
+      <div class="tab-icon">📋</div><div class="tab-lbl">History</div>
+    </button>
+  </div>
+</div>
+
+<!-- ══ MAID SCREEN ══ -->
+<div id="page-maid" class="page">
+  <div class="maid-hdr">
+    <div class="maid-hdr-top">
+      <div>
+        <h1>Hello! 👋</h1>
+        <div class="maid-hdr-sub" id="maid-time"></div>
+      </div>
+      <button class="switch-btn" style="color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3);" onclick="goRole()">↩ Switch</button>
+    </div>
+    <div class="maid-stats">
+      <div class="maid-stat"><div class="maid-stat-n" id="s-pend">0</div><div class="maid-stat-l">PENDING</div></div>
+      <div class="maid-stat"><div class="maid-stat-n" id="s-prog">0</div><div class="maid-stat-l">IN PROGRESS</div></div>
+      <div class="maid-stat"><div class="maid-stat-n" id="s-done">0</div><div class="maid-stat-l">DONE TODAY</div></div>
+    </div>
+  </div>
+  <div id="alarm-banner" class="alarm-banner">
+    <div class="alarm-bell">🔔</div>
+    <div>
+      <div class="alarm-txt" id="alarm-txt">New request!</div>
+      <div class="alarm-sub">Tap Accept to stop alarm</div>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div class="maid-list" id="maid-list"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div id="modal" style="display:none;" class="modal-back" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="m-icon" id="m-icon"></div>
+    <h2 id="m-title"></h2>
+    <div class="m-sub" id="m-sub"></div>
+    <label>Priority</label>
+    <select id="m-priority"><option value="normal">Normal</option><option value="urgent">🔴 Urgent</option></select>
+    <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:13px;">(optional)</span></label>
+    <textarea id="m-note" rows="3" placeholder="Any special instructions?"></textarea>
+    <div class="m-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-send" onclick="submitReq()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SVCS=[
+  {id:'coffee', icon:'☕',name:'Coffee',        tag:'Drinks',  sub:'How would you like it?'},
+  {id:'tea',    icon:'🫖',name:'Tea',            tag:'Drinks',  sub:'Type and extras?'},
+  {id:'food',   icon:'🍽️',name:'Prepare food',  tag:'Kitchen', sub:'What should I prepare?'},
+  {id:'snack',  icon:'🧇',name:'Snack',          tag:'Kitchen', sub:'Any preference?'},
+  {id:'iron',   icon:'👔',name:'Ironing',        tag:'Laundry', sub:'Which items?'},
+  {id:'laundry',icon:'🫧',name:'Laundry',        tag:'Laundry', sub:'Special care needed?'},
+  {id:'door',   icon:'🚪',name:'Open door',      tag:'Home',    sub:'Who is at the door?'},
+  {id:'clean',  icon:'🧹',name:'Clean room',     tag:'Home',    sub:'Which room?'},
+  {id:'grocery',icon:'🛒',name:'Groceries',      tag:'Shopping',sub:'What do you need?'},
+  {id:'trash',  icon:'🗑️',name:'Take trash',    tag:'Home',    sub:'Any notes?'},
+  {id:'water',  icon:'💧',name:'Water & drinks', tag:'Home',    sub:'What would you like?'},
+  {id:'other',  icon:'📋',name:'Other task',     tag:'Custom',  sub:'Describe the task'},
+];
+
+let user='',curSvc=null,db=null,reqsRef=null;
+let actx=null,aTimer=null,notifyTimer=null;
+let knownReqs={};   // tracks what we've seen to detect new ones
+
+/* ══ Firebase setup ══ */
+function showGuide(){
+  const g=document.getElementById('setup-guide');
+  g.style.display=g.style.display==='none'?'block':'none';
+}
+
+function connectFirebase(){
+  const url=document.getElementById('fb-url').value.trim();
+  if(!url||!url.startsWith('https://')){
+    toast('Please paste a valid Firebase URL');return;
+  }
+  localStorage.setItem('hm_fb_url',url);
+  initFirebase(url);
+}
+
+function initFirebase(url){
+  try{
+    const app=firebase.initializeApp({databaseURL:url},'homely');
+    db=firebase.database(app);
+    reqsRef=db.ref('requests');
+    db.ref('.info/connected').on('value',snap=>{
+      const dot=document.getElementById('sync-dot');
+      if(dot) dot.className='sync-dot '+(snap.val()?'live':'offline');
+    });
+    showPage('role');
+  }catch(e){
+    toast('Connection failed — check the URL');
+    console.error(e);
+  }
+}
+
+/* Auto-reconnect if URL saved */
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('hm_fb_url');
+  if(saved) initFirebase(saved);
+});
+
+/* ══ SOUND ENGINE ══ */
+function getCtx(){
+  if(!actx) actx=new(window.AudioContext||window.webkitAudioContext)();
+  return actx;
+}
+function playTone(freq,t,dur,vol,type='sine'){
+  try{
+    const c=getCtx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.015);
+    g.gain.linearRampToValueAtTime(0,t+dur);
+    o.start(t);o.stop(t+dur+0.02);
+  }catch(e){}
+}
+function maidBeep(){
+  const c=getCtx(),t=c.currentTime;
+  playTone(960,t,0.14,0.5,'square');
+  playTone(960,t+0.2,0.14,0.5,'square');
+  playTone(1200,t+0.44,0.18,0.55,'square');
+}
+function chimeAccepted(){
+  const c=getCtx(),t=c.currentTime;
+  playTone(523,t,0.35,0.15,'sine');
+  playTone(659,t+0.28,0.45,0.13,'sine');
+  playTone(784,t+0.52,0.65,0.11,'sine');
+}
+function chimeDone(){
+  const c=getCtx(),t=c.currentTime;
+  playTone(392,t,0.38,0.11,'sine');
+  playTone(523,t+0.22,0.38,0.11,'sine');
+  playTone(659,t+0.44,0.6,0.09,'sine');
+}
+function startMaidAlarm(name){
+  stopMaidAlarm();maidBeep();
+  aTimer=setInterval(maidBeep,2400);
+  document.getElementById('alarm-txt').textContent='🔔 New: '+name;
+  document.getElementById('alarm-banner').classList.add('active');
+}
+function stopMaidAlarm(){
+  clearInterval(aTimer);aTimer=null;
+  document.getElementById('alarm-banner').classList.remove('active');
+}
+function showFamilyNotify(type,name){
+  const b=document.getElementById('notify-banner');
+  const ic=document.getElementById('nb-icon');
+  const tx=document.getElementById('nb-txt');
+  clearTimeout(notifyTimer);
+  b.className='notify-banner show '+type;
+  if(type==='accepted'){ic.textContent='✅';tx.className='nb-txt accepted';tx.textContent='Maid accepted: '+name;chimeAccepted();}
+  else{ic.textContent='🎉';tx.className='nb-txt done';tx.textContent='Done: '+name;chimeDone();}
+  notifyTimer=setTimeout(()=>b.classList.remove('show'),5000);
+}
+
+/* ══ Role / navigation ══ */
+function selectRole(r){
+  user=r;
+  if(r==='Maid'){
+    showPage('maid');
+    const n=new Date();
+    document.getElementById('maid-time').textContent=
+      n.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' · '+
+      n.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});
+    listenMaid();
+  } else {
+    showPage('family');
+    const h=new Date().getHours();
+    document.getElementById('fam-greet').textContent=
+      (h<12?'Good morning ☀️':h<17?'Good afternoon 🌤️':'Good evening 🌙')+', '+r;
+    renderGrid();
+    listenFamily();
+  }
+}
+function goRole(){
+  stopMaidAlarm();
+  if(reqsRef) reqsRef.off();
+  showPage('role');
+}
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+}
+function famTab(t){
+  document.getElementById('ftab-home').style.display=t==='home'?'block':'none';
+  document.getElementById('ftab-history').style.display=t==='history'?'block':'none';
+  document.getElementById('tb-home').classList.toggle('active',t==='home');
+  document.getElementById('tb-hist').classList.toggle('active',t==='history');
+}
+
+/* ══ Live listeners ══ */
+function listenFamily(){
+  if(!reqsRef) return;
+  reqsRef.off();
+  reqsRef.orderByChild('ts').on('value',snap=>{
+    const all=[];
+    snap.forEach(c=>all.push({fbKey:c.key,...c.val()}));
+    all.reverse();
+
+    /* detect status changes for chime */
+    all.forEach(r=>{
+      const prev=knownReqs[r.fbKey];
+      if(prev && prev!==r.status){
+        if(r.status==='accepted') showFamilyNotify('accepted',r.name);
+        if(r.status==='done')     showFamilyNotify('done',r.name);
+      }
+      knownReqs[r.fbKey]=r.status;
+    });
+
+    renderFamilyList(all);
+  });
+}
+
+function listenMaid(){
+  if(!reqsRef) return;
+  reqsRef.off();
+  knownReqs={};
+  reqsRef.orderByChild('ts').on('value',snap=>{
+    const all=[];
+    snap.forEach(c=>all.push({fbKey:c.key,...c.val()}));
+    all.reverse();
+
+    /* detect brand new pending requests → trigger alarm */
+    let hasNewPending=false;
+    all.forEach(r=>{
+      if(!knownReqs[r.fbKey] && r.status==='pending'){
+        hasNewPending=true;
+        startMaidAlarm(r.name);
+      }
+      knownReqs[r.fbKey]=r.status;
+    });
+
+    renderMaidList(all);
+  });
+}
+
+/* ══ Render family ══ */
+function renderGrid(){
+  document.getElementById('svc-grid').innerHTML=SVCS.map(s=>
+    `<div class="svc-card" onclick="openModal('${s.id}')">
+      <div class="svc-icon">${s.icon}</div>
+      <div class="svc-name">${s.name}</div>
+      <div class="svc-tag">${s.tag}</div>
+    </div>`).join('');
+}
+function iHTML(r){
+  const cm={pending:'b-pending',accepted:'b-accepted',done:'b-done',declined:'b-declined'};
+  const lm={pending:'Pending',accepted:'Accepted',done:'Done',declined:'Declined'};
+  return`<div class="pend-item">
+    <div class="pend-icon">${r.icon}</div>
+    <div class="pend-body">
+      <div class="pend-name">${r.name}${r.priority==='urgent'?' 🔴':''}</div>
+      <div class="pend-meta">By ${r.user} · ${r.time}${r.note?' · '+r.note:''}</div>
+    </div>
+    <span class="badge ${cm[r.status]||'b-pending'}">${lm[r.status]||'Pending'}</span>
+  </div>`;
+}
+function renderFamilyList(all){
+  const recent=all.filter(r=>r.status==='pending'||r.status==='accepted').concat(
+    all.filter(r=>r.status==='done'||r.status==='declined')).slice(0,20);
+  const el=document.getElementById('pend-list');
+  el.innerHTML=recent.length?recent.map(iHTML).join(''):
+    '<div class="empty"><div class="ei">📭</div><div class="et">No requests yet</div>Tap a service to get started</div>';
+  const hl=document.getElementById('hist-list');
+  hl.innerHTML=all.length?all.map(iHTML).join(''):
+    '<div class="empty"><div class="ei">🗂️</div><div class="et">No history yet</div></div>';
+}
+
+/* ══ Render maid ══ */
+function renderMaidList(all){
+  const active=all.filter(r=>r.status==='pending'||r.status==='accepted');
+  document.getElementById('s-pend').textContent=all.filter(r=>r.status==='pending').length;
+  document.getElementById('s-prog').textContent=all.filter(r=>r.status==='accepted').length;
+  document.getElementById('s-done').textContent=all.filter(r=>r.status==='done').length;
+
+  /* stop alarm if no pending left */
+  if(!all.some(r=>r.status==='pending')) stopMaidAlarm();
+
+  const el=document.getElementById('maid-list');
+  if(!active.length){
+    el.innerHTML='<div class="empty"><div class="ei">✅</div><div class="et">All caught up!</div>No pending tasks</div>';
+    return;
+  }
+  el.innerHTML=active.map(r=>{
+    const p=r.status==='pending';
+    return`<div class="maid-item${p?' ringing':''}">
+      <div class="maid-item-hd">
+        <div class="maid-ico">${p?'🔔':r.icon}</div>
+        <div style="flex:1">
+          <div class="maid-title">${r.name}</div>
+          <div class="maid-meta">From ${r.user} · ${r.time}</div>
+        </div>
+        ${r.priority==='urgent'?'<div class="maid-urg">Urgent</div>':''}
+      </div>
+      ${r.note?`<div class="maid-note">"${r.note}"</div>`:''}
+      <div class="maid-btns">
+        ${p
+          ?`<button class="btn-accept" onclick="updateStatus('${r.fbKey}','accepted','${r.name}')">Accept &amp; stop alarm</button>`
+          :`<button class="btn-done" onclick="updateStatus('${r.fbKey}','done','${r.name}')">Mark as done</button>`}
+        <button class="btn-cant" onclick="updateStatus('${r.fbKey}','declined','${r.name}')">Can't now</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══ Modal & request submit ══ */
+function openModal(id){
+  curSvc=SVCS.find(s=>s.id===id);
+  document.getElementById('m-icon').textContent=curSvc.icon;
+  document.getElementById('m-title').textContent=curSvc.name;
+  document.getElementById('m-sub').textContent=curSvc.sub;
+  document.getElementById('m-note').value='';
+  document.getElementById('m-priority').value='normal';
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal'))
+    document.getElementById('modal').style.display='none';
+}
+function submitReq(){
+  if(!curSvc||!reqsRef){toast('Not connected to database');return;}
+  const note=document.getElementById('m-note').value.trim();
+  const priority=document.getElementById('m-priority').value;
+  const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  reqsRef.push({
+    icon:curSvc.icon, name:curSvc.name,
+    user, note, priority, time,
+    status:'pending', ts:Date.now()
+  });
+  document.getElementById('modal').style.display='none';
+  toast('Request sent 🔔 Maid will be alerted');
+}
+
+/* ══ Maid actions ══ */
+function updateStatus(key,status,name){
+  if(!reqsRef) return;
+  reqsRef.child(key).update({status});
+  if(status==='accepted') toast('Accepted — alarm stopped ✅');
+  else if(status==='done') toast('Task done! 🎉');
+  else toast('Task declined');
+}
+
+/* ══ Toast ══ */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>

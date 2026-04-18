@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Home Requests">
+<meta name="theme-color" content="#ffffff">
+<title>Home Requests</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #eeece9;
+    --text: #1a1a18;
+    --text-secondary: #6b6b67;
+    --text-tertiary: #9e9e99;
+    --border: rgba(0,0,0,0.10);
+    --border-md: rgba(0,0,0,0.18);
+    --accent: #1a1a18;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --warning-bg: #fef3c7; --warning-text: #92400e;
+    --success-bg: #d1fae5; --success-text: #065f46;
+    --info-bg: #dbeafe;    --info-text: #1e40af;
+    --danger-bg: #fee2e2;  --danger-text: #991b1b;
+    --danger-border: #fca5a5;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #262624;
+      --bg-tertiary: #2e2e2b;
+      --text: #f0ede8;
+      --text-secondary: #a0a09a;
+      --text-tertiary: #6b6b65;
+      --border: rgba(255,255,255,0.10);
+      --border-md: rgba(255,255,255,0.18);
+      --accent: #f0ede8;
+      --warning-bg: #451a03; --warning-text: #fcd34d;
+      --success-bg: #022c22; --success-text: #6ee7b7;
+      --info-bg: #1e3a5f;    --info-text: #93c5fd;
+      --danger-bg: #450a0a;  --danger-text: #fca5a5;
+      --danger-border: #7f1d1d;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overscroll-behavior: none;
+  }
+
+  /* ── App shell ── */
+  #app { display: flex; flex-direction: column; height: 100%; }
+  .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+  .screen.active { display: flex; }
+  .scroll-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(1rem + var(--safe-bottom)); }
+
+  /* ── Top bar ── */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--safe-top) + 14px) 16px 14px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+  .top-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
+  .top-bar .sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* ── User toggle ── */
+  .user-toggle { display: flex; gap: 5px; background: var(--bg-secondary); border-radius: 22px; padding: 4px; }
+  .user-toggle button {
+    border: none; background: transparent; border-radius: 18px;
+    padding: 5px 14px; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; transition: all .15s;
+    font-family: inherit;
+  }
+  .user-toggle button.active {
+    background: var(--bg); color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  }
+
+  /* ── Alarm banner ── */
+  .alarm-banner {
+    display: none; align-items: center; gap: 10px;
+    background: var(--danger-bg); border: 0.5px solid var(--danger-border);
+    border-radius: var(--radius-md); margin: 10px 16px 0;
+    padding: 11px 14px; flex-shrink: 0;
+  }
+  .alarm-banner.active { display: flex; animation: shakebanner .5s ease-in-out infinite; }
+  @keyframes shakebanner { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .alarm-bell { font-size: 22px; animation: ringbell .4s ease-in-out infinite; }
+  @keyframes ringbell { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-20deg)} 75%{transform:rotate(20deg)} }
+  .alarm-text { font-size: 13px; font-weight: 600; color: var(--danger-text); }
+  .alarm-sub { font-size: 11px; color: var(--danger-text); opacity: .75; margin-top: 1px; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .07em;
+    color: var(--text-tertiary); text-transform: uppercase;
+    padding: 18px 16px 8px;
+  }
+
+  /* ── Service grid ── */
+  .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 0 16px; }
+  @media (min-width: 400px) { .service-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 600px) { .service-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .service-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: transform .1s, background .15s;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 7px;
+    min-height: 92px; user-select: none;
+  }
+  .service-card:active { transform: scale(0.96); background: var(--bg-secondary); }
+  .service-card .s-icon { font-size: 24px; line-height: 1; }
+  .service-card .s-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .service-card .s-tag { font-size: 10px; color: var(--text-tertiary); }
+
+  /* ── Pending list ── */
+  .pending-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+  .pending-item {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 11px 13px;
+    display: flex; align-items: center; gap: 11px;
+  }
+  .pi-icon-wrap { width: 38px; height: 38px; border-radius: 10px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .pi-body { flex: 1; min-width: 0; }
+  .pi-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pi-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; }
+  .badge-pending { background: var(--warning-bg); color: var(--warning-text); }
+  .badge-accepted { background: var(--info-bg); color: var(--info-text); }
+  .badge-done { background: var(--success-bg); color: var(--success-text); }
+  .badge-declined { background: var(--bg-secondary); color: var(--text-tertiary); }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 40px 16px; color: var(--text-tertiary); font-size: 14px; }
+  .empty-state .es-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ── Modal ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.45);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .modal {
+    background: var(--bg);
+    border-radius: 22px 22px 0 0; width: 100%; max-width: 540px;
+    padding: 16px 20px calc(20px + var(--safe-bottom));
+    animation: slideUp .22s cubic-bezier(.25,.8,.25,1);
+    max-height: 85vh; overflow-y: auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 38px; height: 4px; border-radius: 2px; background: var(--border-md); margin: 0 auto 18px; }
+  .modal-icon { font-size: 32px; margin-bottom: 8px; }
+  .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 18px; }
+  .modal label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 6px; }
+  .modal select, .modal textarea {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-md);
+    padding: 11px 13px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--bg-secondary);
+    color: var(--text);
+    margin-bottom: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    resize: none;
+  }
+  .modal select:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-send {
+    flex: 1; padding: 14px; border-radius: var(--radius-lg);
+    background: var(--accent); color: var(--bg);
+    border: none; font-size: 16px; font-weight: 600; cursor: pointer;
+    font-family: inherit; letter-spacing: -.2px;
+    transition: opacity .15s;
+  }
+  .btn-send:active { opacity: .8; }
+  .btn-cancel-modal {
+    padding: 14px 20px; border-radius: var(--radius-lg);
+    background: var(--bg-secondary); border: none;
+    font-size: 16px; color: var(--text-secondary); cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ── Maid screen ── */
+  .maid-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--safe-top) + 14px) 16px 14px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg); flex-shrink: 0;
+  }
+  .maid-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .maid-item {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    transition: border-color .3s;
+  }
+  .maid-item.ringing { border-color: #ef4444; animation: pulse-card 1s ease-in-out infinite; }
+  @keyframes pulse-card { 0%,100%{border-color:#ef4444;} 50%{border-color:#fca5a5;} }
+  .maid-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .maid-item-icon { font-size: 22px; width: 42px; height: 42px; border-radius: 11px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .maid-item-title { font-size: 15px; font-weight: 700; }
+  .maid-item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .maid-item-urgent { margin-left: auto; font-size: 12px; font-weight: 600; color: #dc2626; background: #fee2e2; padding: 3px 9px; border-radius: 20px; }
+  .maid-note { font-size: 13px; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 8px; padding: 8px 11px; margin-bottom: 10px; line-height: 1.5; }
+  .maid-btns { display: flex; gap: 8px; }
+  .btn-accept {
+    flex: 1; padding: 11px; border-radius: var(--radius-md);
+    background: var(--info-bg); color: var(--info-text);
+    border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: opacity .15s;
+  }
+  .btn-accept:active { opacity: .8; }
+  .btn-markdone {
+    flex: 1; padding: 11px; border-radius: var(--radius-md);
+    background: var(--success-bg); color: var(--success-text);
+    border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-cantdo {
+    padding: 11px 16px; border-radius: var(--radius-md);
+    background: var(--bg-secondary); border: none;
+    font-size: 14px; color: var(--text-secondary); cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    display: flex; border-top: 0.5px solid var(--border);
+    background: var(--bg); padding-bottom: var(--safe-bottom);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; padding: 10px 8px;
+    border: none; background: transparent; cursor: pointer;
+    color: var(--text-tertiary); font-family: inherit; transition: color .15s;
+    position: relative;
+  }
+  .tab-btn.active { color: var(--text); }
+  .tab-btn .tab-icon { font-size: 22px; line-height: 1; }
+  .tab-btn .tab-label { font-size: 10px; font-weight: 600; letter-spacing: .03em; }
+  .tab-dot { position: absolute; top: 8px; right: calc(50% - 18px); width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 1.5px solid var(--bg); display: none; }
+  .tab-dot.visible { display: block; }
+
+  /* ── Switch btn (maid screen) ── */
+  .ghost-btn {
+    font-size: 13px; padding: 6px 14px; border-radius: 20px;
+    border: 0.5px solid var(--border-md); background: transparent;
+    color: var(--text-secondary); cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg);
+    font-size: 13px; font-weight: 600; padding: 10px 20px;
+    border-radius: 22px; z-index: 999; opacity: 0;
+    transition: opacity .2s; white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── FAMILY SCREEN ── -->
+  <div id="screen-home" class="screen active">
+    <div class="top-bar">
+      <div>
+        <h1>Home Requests</h1>
+        <div class="sub" id="greeting"></div>
+      </div>
+      <div class="user-toggle">
+        <button class="active" onclick="switchUser('Majed')">Majed</button>
+        <button onclick="switchUser('Noura')">Noura</button>
+      </div>
+    </div>
+
+    <div class="scroll-body">
+      <div id="alarm-banner" class="alarm-banner">
+        <div class="alarm-bell">🔔</div>
+        <div>
+          <div class="alarm-text" id="alarm-text">Alarm ringing</div>
+          <div class="alarm-sub">Waiting for maid to accept…</div>
+        </div>
+      </div>
+
+      <div class="section-label">Quick request</div>
+      <div class="service-grid" id="service-grid"></div>
+
+      <div class="section-label">Recent requests</div>
+      <div class="pending-list" id="pending-list"></div>
+    </div>
+  </div>
+
+  <!-- ── MAID SCREEN ── -->
+  <div id="screen-maid" class="screen">
+    <div class="maid-top-bar">
+      <div>
+        <h1 style="font-size:18px;font-weight:600;">Maid View</h1>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Incoming tasks</div>
+      </div>
+    </div>
+    <div class="scroll-body" style="padding-top:12px;">
+      <div class="maid-list" id="maid-list"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB BAR ── -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-home" onclick="showTab('home')">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">Home</div>
+    </button>
+    <button class="tab-btn" id="tab-history" onclick="showTab('history')">
+      <div class="tab-icon">📋</div>
+      <div class="tab-label">History</div>
+    </button>
+    <button class="tab-btn" id="tab-maid" onclick="showTab('maid')">
+      <div class="tab-icon">👩‍🍳</div>
+      <div class="tab-label">Maid</div>
+      <div class="tab-dot" id="maid-dot"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ── MODAL ── -->
+<div id="modal" style="display:none;" class="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-icon" id="modal-icon"></div>
+    <h2 id="modal-title"></h2>
+    <div class="modal-sub" id="modal-sub"></div>
+    <label>Priority</label>
+    <select id="modal-priority">
+      <option value="normal">Normal</option>
+      <option value="urgent">🔴 Urgent</option>
+    </select>
+    <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+    <textarea id="modal-note" rows="3" placeholder="Any special instructions?"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
+      <button class="btn-send" onclick="submitRequest()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HISTORY SCREEN (hidden tab content) ── -->
+<div id="screen-history" class="screen">
+  <div class="top-bar" style="padding-top:calc(var(--safe-top) + 14px);">
+    <div><h1>History</h1><div class="sub">All requests</div></div>
+    <button class="ghost-btn" onclick="clearHistory()">Clear</button>
+  </div>
+  <div class="scroll-body">
+    <div class="pending-list" id="history-list" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SERVICES = [
+  { id:'coffee',  icon:'☕', name:'Coffee',         tag:'Drinks',    sub:'How would you like it?' },
+  { id:'tea',     icon:'🫖', name:'Tea',             tag:'Drinks',    sub:'Type and extras?' },
+  { id:'food',    icon:'🍽️', name:'Prepare food',  tag:'Kitchen',   sub:'What should I prepare?' },
+  { id:'snack',   icon:'🧇', name:'Snack',           tag:'Kitchen',   sub:'Any preference?' },
+  { id:'iron',    icon:'👔', name:'Ironing',         tag:'Laundry',   sub:'Which items to iron?' },
+  { id:'laundry', icon:'🫧', name:'Laundry',         tag:'Laundry',   sub:'Any special care needed?' },
+  { id:'door',    icon:'🚪', name:'Open door',      tag:'Home',      sub:'Who is at the door?' },
+  { id:'clean',   icon:'🧹', name:'Clean room',     tag:'Home',      sub:'Which room?' },
+  { id:'grocery', icon:'🛒', name:'Groceries',       tag:'Shopping',  sub:'What do you need?' },
+  { id:'trash',   icon:'🗑️', name:'Take trash',    tag:'Home',      sub:'Any notes?' },
+  { id:'water',   icon:'💧', name:'Water & drinks', tag:'Home',      sub:'What would you like?' },
+  { id:'other',   icon:'📋', name:'Other task',     tag:'Custom',    sub:'Describe the task' },
+];
+
+let currentUser = 'Majed';
+let currentService = null;
+let requests = [];
+let reqId = 1;
+let audioCtx = null;
+let alarmTimer = null;
+let currentTab = 'home';
+
+/* ── Audio ── */
+function ctx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep() {
+  try {
+    const c = ctx();
+    [[880,0],[0,80],[880,0],[0,80],[1100,0]].reduce((t,[f,gap]) => {
+      if (!f) return t + gap/1000;
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.35, t+0.01);
+      g.gain.linearRampToValueAtTime(0, t+0.18);
+      o.start(t); o.stop(t+0.2);
+      return t + 0.22;
+    }, c.currentTime);
+  } catch(e) {}
+}
+function startAlarm(name) {
+  stopAlarm();
+  beep();
+  alarmTimer = setInterval(beep, 2200);
+  document.getElementById('alarm-text').textContent = '🔔 ' + name;
+  document.getElementById('alarm-banner').classList.add('active');
+  document.getElementById('maid-dot').classList.add('visible');
+}
+function stopAlarm() {
+  clearInterval(alarmTimer); alarmTimer = null;
+  if (!requests.some(r => r.status === 'pending')) {
+    document.getElementById('alarm-banner').classList.remove('active');
+    document.getElementById('maid-dot').classList.remove('visible');
+  }
+}
+
+/* ── Greeting ── */
+function greet() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning ☀️' : h < 17 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
+}
+
+/* ── User switch ── */
+function switchUser(name) {
+  currentUser = name;
+  document.querySelectorAll('.user-toggle button').forEach(b =>
+    b.classList.toggle('active', b.textContent === name));
+}
+
+/* ── Tab navigation ── */
+function showTab(tab) {
+  currentTab = tab;
+  ['home','history','maid'].forEach(t => {
+    document.getElementById('screen-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'maid') renderMaid();
+  if (tab === 'history') renderHistory();
+}
+
+/* ── Render service grid ── */
+function renderGrid() {
+  document.getElementById('service-grid').innerHTML = SERVICES.map(s =>
+    `<div class="service-card" onclick="openModal('${s.id}')">
+      <div class="s-icon">${s.icon}</div>
+      <div class="s-name">${s.name}</div>
+      <div class="s-tag">${s.tag}</div>
+    </div>`).join('');
+}
+
+/* ── Render recent (home screen) ── */
+function renderRecent() {
+  const el = document.getElementById('pending-list');
+  const recent = [...requests].reverse().slice(0, 5);
+  if (!recent.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div>No requests yet</div>';
+    return;
+  }
+  el.innerHTML = recent.map(r => pendingItemHTML(r)).join('');
+}
+
+/* ── Render history ── */
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!requests.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">🗂️</div>No history yet</div>';
+    return;
+  }
+  el.innerHTML = [...requests].reverse().map(r => pendingItemHTML(r)).join('');
+}
+
+function pendingItemHTML(r) {
+  const map = { pending:'badge-pending', accepted:'badge-accepted', done:'badge-done', declined:'badge-declined' };
+  const labels = { pending:'Pending', accepted:'Accepted', done:'Done', declined:'Declined' };
+  return `<div class="pending-item">
+    <div class="pi-icon-wrap">${r.icon}</div>
+    <div class="pi-body">
+      <div class="pi-name">${r.name}${r.priority==='urgent'?' 🔴':''}</div>
+      <div class="pi-meta">By ${r.user} · ${r.time}${r.note?' · '+r.note:''}</div>
+    </div>
+    <span class="badge ${map[r.status]||'badge-pending'}">${labels[r.status]||'Pending'}</span>
+  </div>`;
+}
+
+/* ── Render maid list ── */
+function renderMaid() {
+  const el = document.getElementById('maid-list');
+  const active = requests.filter(r => r.status === 'pending' || r.status === 'accepted');
+  if (!active.length) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div>All caught up! No pending tasks.</div>';
+    return;
+  }
+  el.innerHTML = active.map(r => {
+    const pending = r.status === 'pending';
+    return `<div class="maid-item${pending?' ringing':''}">
+      <div class="maid-item-head">
+        <div class="maid-item-icon">${pending?'🔔':r.icon}</div>
+        <div>
+          <div class="maid-item-title">${r.name}</div>
+          <div class="maid-item-meta">From ${r.user} · ${r.time}</div>
+        </div>
+        ${r.priority==='urgent'?'<div class="maid-item-urgent">Urgent</div>':''}
+      </div>
+      ${r.note?`<div class="maid-note">"${r.note}"</div>`:''}
+      <div class="maid-btns">
+        ${pending
+          ? `<button class="btn-accept" onclick="acceptTask(${r.id})">Accept & stop alarm</button>`
+          : `<button class="btn-markdone" onclick="markDone(${r.id})">Mark as done</button>`}
+        <button class="btn-cantdo" onclick="markDecline(${r.id})">Can't now</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Modal ── */
+function openModal(id) {
+  currentService = SERVICES.find(s => s.id === id);
+  document.getElementById('modal-icon').textContent = currentService.icon;
+  document.getElementById('modal-title').textContent = currentService.name;
+  document.getElementById('modal-sub').textContent = currentService.sub;
+  document.getElementById('modal-note').value = '';
+  document.getElementById('modal-priority').value = 'normal';
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal'))
+    document.getElementById('modal').style.display = 'none';
+}
+function submitRequest() {
+  if (!currentService) return;
+  const note = document.getElementById('modal-note').value.trim();
+  const priority = document.getElementById('modal-priority').value;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  requests.push({ id: reqId++, icon: currentService.icon, name: currentService.name, user: currentUser, note, priority, time, status: 'pending' });
+  document.getElementById('modal').style.display = 'none';
+  renderRecent();
+  startAlarm(currentService.name);
+  toast('Request sent — alarm ringing 🔔');
+}
+
+/* ── Maid actions ── */
+function acceptTask(id) {
+  const r = requests.find(r => r.id === id);
+  if (!r) return;
+  r.status = 'accepted';
+  stopAlarm();
+  renderMaid(); renderRecent();
+  toast('Order accepted — alarm stopped ✅');
+}
+function markDone(id) {
+  const r = requests.find(r => r.id === id);
+  if (r) { r.status = 'done'; renderMaid(); renderRecent(); toast('Task done! 🎉'); }
+}
+function markDecline(id) {
+  const r = requests.find(r => r.id === id);
+  if (r) { r.status = 'declined'; stopAlarm(); renderMaid(); renderRecent(); toast('Task declined'); }
+}
+function clearHistory() {
+  requests = []; renderRecent(); renderHistory();
+  toast('History cleared');
+}
+
+/* ── Toast ── */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── Init ── */
+document.getElementById('greeting').textContent = greet();
+renderGrid();
+renderRecent();
+</script>
+</body>
+</html>
